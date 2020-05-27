@@ -12,7 +12,6 @@ ESP-IDF Code
 
 void vTask1( void *pvParameters )
 {
-
     for( ;; )
     {
         printf("Hello World \n");
