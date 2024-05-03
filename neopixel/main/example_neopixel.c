@@ -59,8 +59,6 @@ static void IRAM_ATTR ws2812_rmt_adapter(const void *src, rmt_item32_t *dest, si
 
 esp_err_t example_neopixel_initialize()
 {
-    // config = RMT_DEFAULT_CONFIG_TX(NEOPIXEL_PIN, RMT_TX_CHANNEL);
-
     rmt_config_t config = {
         .rmt_mode = RMT_MODE_TX,
         .channel = xChannel,
@@ -77,8 +75,6 @@ esp_err_t example_neopixel_initialize()
             .idle_output_en = true,
         }
     };
-
-    // config.clk_div = 2;
 
     rmt_config(&config);
     rmt_driver_install(config.channel, 0, 0);
@@ -99,8 +95,6 @@ esp_err_t example_neopixel_initialize()
     // Initialize automatic timing translator
     rmt_translator_init(config.channel, ws2812_rmt_adapter);
 
-    // gpio_set_direction(NEOPIXEL_PIN, GPIO_MODE_OUTPUT);
-
     pixels = (uint8_t *)malloc(NEOPIXEL_SIZE * 4);
 
     return ESP_OK;
@@ -111,6 +105,8 @@ esp_err_t example_neopixel_deinitialize()
     // Free channel again
     rmt_driver_uninstall(config.channel);
 
+    free(pixels);
+
     return ESP_OK;
 }
 
@@ -118,8 +114,8 @@ esp_err_t example_neopixel_set_color(uint8_t red, uint8_t green, uint8_t blue, u
 {
     for (size_t i = 0; i < NEOPIXEL_SIZE; i++)
     {
-        pixels[i * 4] = red;
-        pixels[i * 4 + 1] = green;
+        pixels[i * 4] = green;
+        pixels[i * 4 + 1] = red;
         pixels[i * 4 + 2] = blue;
         pixels[i * 4 + 3] = white;
     }
@@ -131,8 +127,16 @@ esp_err_t example_neopixel_set_color(uint8_t red, uint8_t green, uint8_t blue, u
     return ESP_OK;
 }
 
-esp_err_t example_neopixel_set_pixel_color(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t)
+esp_err_t example_neopixel_set_pixel_color(uint8_t index, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
 {
+    pixels[index * 4] = green;
+    pixels[index * 4 + 1] = red;
+    pixels[index * 4 + 2] = blue;
+    pixels[index * 4 + 3] = white;
+
+    // Write and wait to finish
+    rmt_write_sample(config.channel, pixels, NEOPIXEL_SIZE * 4, true);
+    rmt_wait_tx_done(config.channel, pdMS_TO_TICKS(100));
 
     return ESP_OK;
 }
